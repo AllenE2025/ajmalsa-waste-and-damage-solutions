@@ -4,11 +4,11 @@
     "slug": "aljouf-baladiya",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/ajmalsa-waste-and-damage-solutions.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/ajmalsa-waste-and-damage-solutions.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
@@ -17,12 +17,21 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
+        "foregroundImage": "./assets/ajmalsa-waste-and-damage-solutions.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.dae2025.aljoufbaladiya"
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/ajmalsa-waste-and-damage-solutions.png"
+    },
+    "plugins": [
+      "expo-font"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "6a015982-abca-4bac-be65-8fb6c8090606"
+      }
     }
   }
 }
