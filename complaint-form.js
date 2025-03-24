@@ -155,7 +155,7 @@ const ComplaintForm = () => {
         >
           <View style={{ flexDirection: "row", alignItems: "center" }}>
             <Image
-              source={require("./assets/aljouf-baladiya.webp")}
+              source={require("./assets/ajmalsa-waste-and-damage-solutions.png")}
               style={styles.icon}
               resizeMode="contain"
             />

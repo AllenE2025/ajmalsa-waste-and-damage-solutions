@@ -1,37 +1,43 @@
 {
   "expo": {
-    "name": "aljouf-baladiya",
-    "slug": "aljouf-baladiya",
+    "name": "ajmalsa-waste-and-damage-solutions",
+    "slug": "ajmalsa-waste-and-damage-solutions",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/ajmalsa-waste-and-damage-solutions.png",
+    "icon": "./assets/app-icon.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/ajmalsa-waste-and-damage-solutions.png",
+      "image": "./assets/app-icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.dae2025.ajmalsawasteanddamagesolutions",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/ajmalsa-waste-and-damage-solutions.png",
+        "foregroundImage": "./assets/app-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.dae2025.aljoufbaladiya"
+      "package": "com.dae2025.ajmalsawasteanddamagesolutions"
     },
     "web": {
-      "favicon": "./assets/ajmalsa-waste-and-damage-solutions.png"
+      "favicon": "./assets/app-icon.png"
     },
     "plugins": [
       "expo-font"
     ],
     "extra": {
       "eas": {
-        "projectId": "6a015982-abca-4bac-be65-8fb6c8090606"
+        "projectId": "93374504-cc60-48a3-8650-ac8dcfc21334"
       }
-    }
+    },
+    "runtimeVersion": "1.0.0"
+   
   }
 }
