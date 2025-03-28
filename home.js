@@ -217,8 +217,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     margin: 15,
     borderRadius: 20,
-    width: 140,
-    height: 140,
+    width: 120,
+    height: 120,
     // **Shadow for iOS**
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
@@ -228,8 +228,8 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   iconTab: {
-    width: 150,
-    height: 150,
+    width: 120,
+    height: 120,
     alignItems: "center",
     justifyContent: "center",
   },

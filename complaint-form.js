@@ -12,10 +12,9 @@ import {
   Image,
   StyleSheet,
 } from "react-native";
-import * as DocumentPicker from "expo-document-picker";
+import * as ImagePicker from "expo-image-picker";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons, AntDesign } from "@expo/vector-icons";
-import Entypo from "@expo/vector-icons/Entypo";
 import { useNavigation } from "@react-navigation/native";
 
 const translations = {
@@ -25,16 +24,16 @@ const translations = {
     title: "Complaint Report",
     description:
       "Please fill out the complaint report form for the waste and damage management system to ensure your concerns are addressed promptly.",
-    fullName: "Full Name",
+    fullname: "Full Name",
     phone: "Phone Number",
     email: "Email",
     message: "Write your message...",
-    attachFile: "Attach File",
+    attachFile: "Attach Image",
     submit: "Submit",
     remove: "Remove",
     evidence: "Evidence Attachment",
     errors: {
-      fullName: "Full name is required",
+      fullname: "Full name is required",
       phone: "Phone number is required",
       email: "Invalid email format",
       message: "Message is required",
@@ -47,16 +46,16 @@ const translations = {
     title: "تقرير الشكوى",
     description:
       "يرجى ملء نموذج تقرير الشكوى لنظام إدارة النفايات والأضرار لضمان معالجة مخاوفك على الفور.",
-    fullName: "الاسم الكامل",
+    fullname: "الاسم الكامل",
     phone: "رقم الهاتف",
     email: "البريد الإلكتروني",
     message: "اكتب رسالتك...",
-    attachFile: "إرفاق ملف",
+    attachFile: "إرفاق صورة",
     submit: "إرسال",
     remove: "إزالة",
     evidence: "إرفاق دليل",
     errors: {
-      fullName: "الاسم الكامل مطلوب",
+      fullname: "الاسم الكامل مطلوب",
       phone: "رقم الهاتف مطلوب",
       email: "تنسيق البريد الإلكتروني غير صالح",
       message: "الرسالة مطلوبة",
@@ -71,7 +70,7 @@ const ComplaintForm = () => {
   const [language, setLanguage] = useState("en");
 
   const [form, setForm] = useState({
-    fullName: "",
+    fullname: "",
     phone: "",
     email: "",
     message: "",
@@ -84,13 +83,18 @@ const ComplaintForm = () => {
     setErrors({ ...errors, [name]: "" });
   };
 
-  const handleFilePick = async (index) => {
+  const handleImagePick = async (index) => {
     try {
-      const result = await DocumentPicker.getDocumentAsync({ type: "*/*" });
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 1,
+      });
       if (!result.canceled && result.assets.length > 0) {
         const newFiles = [...form.files];
         newFiles[index] = {
-          name: result.assets[0].name,
+          name: `image_${index}.jpg`,
           uri: result.assets[0].uri,
         };
         setForm((prevForm) => ({
@@ -99,7 +103,7 @@ const ComplaintForm = () => {
         }));
       }
     } catch (err) {
-      console.error("Error selecting file:", err);
+      console.error("Error selecting image:", err);
     }
   };
 
@@ -118,7 +122,7 @@ const ComplaintForm = () => {
   const validateForm = () => {
     let newErrors = {};
     const t = translations[language].errors;
-    if (!form.fullName.trim()) newErrors.fullName = t.fullName;
+    if (!form.fullname.trim()) newErrors.fullname = t.fullname;
     if (!form.phone.trim()) newErrors.phone = t.phone;
     if (!form.email.trim() || !validateEmail(form.email))
       newErrors.email = t.email;
@@ -127,12 +131,52 @@ const ComplaintForm = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = () => {
-    if (validateForm()) {
-      console.log("Form submitted:", form);
-      alert(translations[language].submit + " successful!");
-    } else {
+  const handleSubmit = async () => {
+    if (!validateForm()) {
       alert("Please correct the errors before submitting.");
+      return;
+    }
+
+    const apiUrl = "https://sys.ajmalsa.com/api/observation";
+    
+    const formData = new FormData();
+    formData.append("fullname", form.fullname);
+    formData.append("phone_number", form.phone);
+    formData.append("email", form.email);
+    formData.append("message", form.message);
+    formData.append("lang", language);
+    formData.append("lat", "0");
+
+    form.files.forEach((file, index) => {
+      if (file) {
+        formData.append(`files[${index}]`, {
+          uri: file.uri,
+          name: file.name,
+          type: "image/jpeg",
+        });
+      }
+    });
+
+    try {
+      const response = await fetch(apiUrl, {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+        },
+        body: formData,
+      });
+
+      const responseData = await response.json();
+      if (response.ok) {
+        alert("Form submitted successfully!");
+        console.log("Response:", responseData);
+      } else {
+        alert("Submission failed. Please try again.");
+        console.error("Error:", responseData);
+      }
+    } catch (error) {
+      console.error("Request error:", error);
+      alert("An error occurred. Please check your connection.");
     }
   };
 
@@ -194,12 +238,12 @@ const ComplaintForm = () => {
 
             <TextInput
               style={styles.input}
-              placeholder={t.fullName}
+              placeholder={t.fullname}
               placeholderTextColor="rgba(0, 0, 0, 0.5)"
-              onChangeText={(value) => handleInputChange("fullName", value)}
+              onChangeText={(value) => handleInputChange("fullname", value)}
             />
-            {errors.fullName && (
-              <Text style={styles.errorText}>{errors.fullName}</Text>
+            {errors.fullname && (
+              <Text style={styles.errorText}>{errors.fullname}</Text>
             )}
 
             <TextInput
@@ -241,7 +285,7 @@ const ComplaintForm = () => {
                   )}
                   <TouchableOpacity
                     style={styles.button}
-                    onPress={() => handleFilePick(index)}
+                    onPress={() => handleImagePick(index)}
                   >
                     <Ionicons
                       name="attach"

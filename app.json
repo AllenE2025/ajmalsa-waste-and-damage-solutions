@@ -30,7 +30,8 @@
       "favicon": "./assets/app-icon.png"
     },
     "plugins": [
-      "expo-font"
+      "expo-font",
+      "expo-sqlite"
     ],
     "extra": {
       "eas": {
@@ -38,6 +39,5 @@
       }
     },
     "runtimeVersion": "1.0.0"
-   
   }
 }
