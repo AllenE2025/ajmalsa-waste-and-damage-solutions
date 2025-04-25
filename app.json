@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "ajmalsa-waste-and-damage-solutions",
+    "name": "Ajmalsa Waste and Damage Solutions",
     "slug": "ajmalsa-waste-and-damage-solutions",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -10,7 +10,11 @@
     "splash": {
       "image": "./assets/app-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#ffffff",
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION"
+      ]
     },
     "ios": {
       "supportsTablet": true,
@@ -22,9 +26,10 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/app-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#ffffff",
       },
-      "package": "com.dae2025.ajmalsawasteanddamagesolutions"
+      "package": "com.dae2025.ajmalsawasteanddamagesolutions",
+      "permissions": ["ACCESS_FINE_LOCATION"]
     },
     "web": {
       "favicon": "./assets/app-icon.png"

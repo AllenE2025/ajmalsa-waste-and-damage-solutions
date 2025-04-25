@@ -14,6 +14,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { useNavigation } from "@react-navigation/native";
+import { Linking } from "react-native";
 
 const translations = {
   en: {
@@ -30,6 +31,14 @@ const translations = {
     cancel: "يلغي",
     languageToggle: "إنجليزي",
   },
+};
+
+
+const callEmergencyHotline = () => {
+  const phoneNumber = "tel:+966508624264";
+  Linking.openURL(phoneNumber).catch((err) =>
+    console.error("Error dialing phone:", err)
+  );
 };
 
 const EmergencyButton = () => {
@@ -88,17 +97,11 @@ const EmergencyButton = () => {
           <Text style={styles.description}>{t.description}</Text>
 
           <View style={{ alignItems: "center", marginTop: 100 }}>
-            <TouchableOpacity style={styles.buttonEmergency}>
-              <MaterialCommunityIcons
-                name="gesture-double-tap"
-                size={40}
-                color="black"
-              />
-            </TouchableOpacity>
+          <TouchableOpacity style={styles.buttonEmergency} onPress={callEmergencyHotline}>
+  <MaterialCommunityIcons name="gesture-double-tap" size={40} color="black" />
+</TouchableOpacity>;
 
-            <TouchableOpacity style={styles.cancel}>
-              <Text style={{ color: "white" }}>{t.cancel}</Text>
-            </TouchableOpacity>
+            
           </View>
         </KeyboardAvoidingView>
       </SafeAreaView>
@@ -168,15 +171,7 @@ const styles = StyleSheet.create({
     borderRadius: 100, // Make it circular
     marginBottom: 10, // Add spacing between buttons
   },
-  cancel: {
-    backgroundColor: "#1E9639",
-    padding: 10,
-    borderRadius: 5,
-    justifyContent: "center",
-    alignItems: "center",
-    width: 100,
-    marginTop: 50,
-  },
+  
   back: {
     margin: 10,
     width: 50,

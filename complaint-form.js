@@ -16,6 +16,9 @@ import * as ImagePicker from "expo-image-picker";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons, AntDesign } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
+import * as Location from "expo-location";
+import PhoneInput from "react-native-phone-number-input";
+
 
 const translations = {
   en: {
@@ -37,6 +40,7 @@ const translations = {
       phone: "Phone number is required",
       email: "Invalid email format",
       message: "Message is required",
+      files: "At least one image is required",
     },
     languageToggle: "Arabic",
   },
@@ -59,6 +63,7 @@ const translations = {
       phone: "رقم الهاتف مطلوب",
       email: "تنسيق البريد الإلكتروني غير صالح",
       message: "الرسالة مطلوبة",
+      files: "مطلوب إرفاق صورة واحدة على الأقل",
     },
     languageToggle: "إنجليزي",
   },
@@ -66,9 +71,7 @@ const translations = {
 
 const ComplaintForm = () => {
   const navigation = useNavigation();
-
   const [language, setLanguage] = useState("en");
-
   const [form, setForm] = useState({
     fullname: "",
     phone: "",
@@ -84,23 +87,27 @@ const ComplaintForm = () => {
   };
 
   const handleImagePick = async (index) => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== "granted") {
+      alert("Permission to access media library is required!");
+      return;
+    }
+
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [4, 3],
+        allowsEditing: false,
         quality: 1,
       });
+
       if (!result.canceled && result.assets.length > 0) {
         const newFiles = [...form.files];
         newFiles[index] = {
           name: `image_${index}.jpg`,
           uri: result.assets[0].uri,
+          type: "image/jpeg",
         };
-        setForm((prevForm) => ({
-          ...prevForm,
-          files: newFiles,
-        }));
+        setForm((prevForm) => ({ ...prevForm, files: newFiles }));
       }
     } catch (err) {
       console.error("Error selecting image:", err);
@@ -120,44 +127,77 @@ const ComplaintForm = () => {
     /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email);
 
   const validateForm = () => {
-    let newErrors = {};
+    const newErrors = {};
     const t = translations[language].errors;
+
     if (!form.fullname.trim()) newErrors.fullname = t.fullname;
     if (!form.phone.trim()) newErrors.phone = t.phone;
     if (!form.email.trim() || !validateEmail(form.email))
       newErrors.email = t.email;
     if (!form.message.trim()) newErrors.message = t.message;
+    if (!form.files.some((file) => file !== null)) newErrors.files = t.files;
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async () => {
-    if (!validateForm()) {
-      alert("Please correct the errors before submitting.");
-      return;
-    }
+    if (!validateForm()) return;
 
-    const apiUrl = "https://sys.ajmalsa.com/api/observation";
-    
-    const formData = new FormData();
-    formData.append("fullname", form.fullname);
-    formData.append("phone_number", form.phone);
-    formData.append("email", form.email);
-    formData.append("message", form.message);
-    formData.append("lang", language);
-    formData.append("lat", "0");
-
-    form.files.forEach((file, index) => {
-      if (file) {
-        formData.append(`files[${index}]`, {
-          uri: file.uri,
-          name: file.name,
-          type: "image/jpeg",
-        });
+    const requestLocationPermission = async () => {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      console.log("Location permission status:", status);
+      if (status !== "granted") {
+        alert("Location permission is required to submit the form.");
+        return false;
       }
-    });
+      return true;
+    };
 
     try {
+      const hasPermission = await requestLocationPermission();
+      if (!hasPermission) return;
+
+      let location;
+      try {
+        location = await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.Highest, // Try Low or Lowest
+          timeout: 5000, // Add timeout
+        });
+
+        console.log("Fetched location:", location);
+
+      } catch (err) {
+        console.error("Location fetch error:", err);
+        alert("Could not fetch location. Make sure location services are enabled.");
+        return;
+      }
+
+      const { latitude, longitude } = location.coords;
+
+      const apiUrl = "https://sys.ajmalsa.com/api/observation";
+      const formData = new FormData();
+      formData.append("fullname", form.fullname);
+      formData.append("phone_number", form.phone);
+      formData.append("email", form.email);
+      formData.append("message", form.message);
+      formData.append("lat", latitude.toString());
+      formData.append("lang", longitude.toString());
+
+      form.files.forEach((file, index) => {
+        if (file) {
+          formData.append(`attachment${index + 1}`, {
+            uri: file.uri,
+            name: file.name,
+            type: file.type,
+          });
+        }
+      });
+
+      for (let pair of formData.entries()) {
+        console.log(pair[0] + ": " + pair[1]);
+      }
+
       const response = await fetch(apiUrl, {
         method: "POST",
         headers: {
@@ -170,14 +210,30 @@ const ComplaintForm = () => {
       if (response.ok) {
         alert("Form submitted successfully!");
         console.log("Response:", responseData);
+        setForm({
+          fullname: "",
+          phone: "",
+          email: "",
+          message: "",
+          files: [null, null, null, null],
+        });
+      
+        // Clear validation errors
+        setErrors({});
+      
       } else {
-        alert("Submission failed. Please try again.");
+        alert(responseData.message || "Submission failed. Please try again.");
         console.error("Error:", responseData);
       }
     } catch (error) {
       console.error("Request error:", error);
       alert("An error occurred. Please check your connection.");
     }
+
+    console.log("Location object at submit:", location);
+    console.log("Latitude at submit:", location?.coords?.latitude);
+    console.log("Longitude at submit:", location?.coords?.longitude);
+
   };
 
   const toggleLanguage = () => setLanguage(language === "en" ? "ar" : "en");
@@ -185,12 +241,12 @@ const ComplaintForm = () => {
 
   return (
     <LinearGradient
-      colors={["#FFFFFF", "#9FD1B0"]} // White to light green
+      colors={["#FFFFFF", "#9FD1B0"]}
       start={{ x: 0, y: 0 }}
-      end={{ x: 0, y: 1 }} // Top to bottom
+      end={{ x: 0, y: 1 }}
       style={styles.gradientBackground}
     >
-      <SafeAreaView style={styles.safeArea}>
+     <SafeAreaView style={styles.safeArea}>
         <LinearGradient
           colors={["#053400", "#1B7700", "#053400"]} // Adjust colors as needed
           start={{ x: 0, y: 0 }}
@@ -240,27 +296,38 @@ const ComplaintForm = () => {
               style={styles.input}
               placeholder={t.fullname}
               placeholderTextColor="rgba(0, 0, 0, 0.5)"
+              value={form.fullname}
               onChangeText={(value) => handleInputChange("fullname", value)}
             />
             {errors.fullname && (
               <Text style={styles.errorText}>{errors.fullname}</Text>
             )}
 
-            <TextInput
-              style={styles.input}
-              placeholder={t.phone}
-              placeholderTextColor="rgba(0, 0, 0, 0.5)"
-              keyboardType="phone-pad"
-              onChangeText={(value) => handleInputChange("phone", value)}
-            />
-            {errors.phone && (
-              <Text style={styles.errorText}>{errors.phone}</Text>
-            )}
+<PhoneInput
+  defaultValue={form.phone}
+  defaultCode="SA"
+  layout="first"
+  onChangeFormattedText={(text) => handleInputChange("phone", text)}
+  containerStyle={{ marginVertical: 5, borderRadius: 5, width: 370, borderWidth: 1, borderColor: "lightgray" }}
+  textContainerStyle={{
+    paddingVertical: 0,
+    backgroundColor: "#F0F0F0",
+    borderRadius: 5,
+  }}
+  textInputProps={{
+    placeholder: t.phone,
+    placeholderTextColor: "rgba(0, 0, 0, 0.5)",
+  }}
+/>
+{errors.phone && (
+  <Text style={styles.errorText}>{errors.phone}</Text>
+)}
 
             <TextInput
               style={styles.input}
               placeholder={t.email}
               placeholderTextColor="rgba(0, 0, 0, 0.5)"
+              value={form.email}
               keyboardType="email-address"
               onChangeText={(value) => handleInputChange("email", value)}
             />
@@ -298,10 +365,14 @@ const ComplaintForm = () => {
                 </View>
               ))}
             </View>
+            {errors.files && (
+              <Text style={styles.errorText}>{errors.files}</Text>
+            )}
             <TextInput
               style={[styles.input, styles.messageBox]}
               placeholder={t.message}
               placeholderTextColor="rgba(0, 0, 0, 0.5)"
+              value={form.message}
               multiline
               onChangeText={(value) => handleInputChange("message", value)}
               textAlignVertical="top"
@@ -358,16 +429,13 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     marginVertical: 5,
   },
-  fileText: { fontSize: 14 },
-  removeButton: { color: "red" },
-  button: {
-    backgroundColor: "#1E9639",
-    padding: 10,
-    borderRadius: 5,
-    marginVertical: 10,
-    width: 100,
-    alignItems: "center",
+  fileText: {
+    fontSize: 14,
   },
+  removeButton: {
+    color: "red",
+  },
+
   submitButton: {
     backgroundColor: "#1E9639",
     padding: 10,
